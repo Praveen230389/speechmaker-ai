@@ -1,0 +1,4 @@
+=========== RISK REPORT ===========
+[HIGH RISK] WhisperX detected
+[HIGH RISK] pyannote detected
+[INFO] XTTS/TTS detected

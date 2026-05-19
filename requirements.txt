@@ -1,0 +1,6 @@
+## Choose your environment:
+## For GPU (NVIDIA CUDA 11.8+):
+# pip install -r requirements-gpu.txt
+
+## For CPU (Local Testing / WSL / Mac):
+# pip install -r requirements-cpu.txt

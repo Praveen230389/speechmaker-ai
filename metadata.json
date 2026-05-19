@@ -1,0 +1,8 @@
+{
+  "name": "Initial Site",
+  "description": "A basic starting site ready for file uploads and future development.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

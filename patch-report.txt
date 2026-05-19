@@ -1,0 +1,24 @@
+
+==================================
+ PATCHING WHISPER WORKER 
+==================================
+[OK] CPU safety patches applied
+
+==================================
+ PATCHING SMOKE TEST 
+==================================
+[OK] Smoke test patched
+
+==================================
+ VERIFYING PATCHES 
+==================================
+1:import json
+113:        model = whisper.load_model(model_size, device=device)
+143:    model_a, metadata = whisperx.load_align_model(language_code=result["language"], device=device)
+129:    compute_type = "float16" if device == "cuda" else "int8"
+134:    model = whisperx.load_model(model_size, device, compute_type=compute_type, language=lang)
+[OK] Verification complete
+
+==================================
+ PATCH COMPLETED 
+==================================

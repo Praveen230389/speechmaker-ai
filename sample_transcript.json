@@ -1,0 +1,14 @@
+{
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 2.5,
+      "text": " Welcome to the AI Dubbing platform."
+    },
+    {
+      "start": 3.0,
+      "end": 5.0,
+      "text": " We are testing the pipeline reliability."
+    }
+  ]
+}

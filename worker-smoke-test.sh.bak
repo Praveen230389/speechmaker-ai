@@ -1,0 +1,252 @@
+#!/bin/bash
+
+echo ""
+echo "======================================="
+echo " AI WORKER SMOKE TEST "
+echo "======================================="
+echo ""
+
+REPORT="worker-test-report.txt"
+
+rm -f $REPORT
+
+touch $REPORT
+
+log() {
+    echo "$1"
+    echo "$1" >> $REPORT
+}
+
+# --------------------------------------
+# ACTIVATE VENV
+# --------------------------------------
+
+log "=================================="
+log " ACTIVATING VENV "
+log "=================================="
+
+source venv/bin/activate
+
+if [ $? -ne 0 ]; then
+    log "[FAIL] Could not activate venv"
+    exit 1
+fi
+
+log "[OK] venv activated"
+
+# --------------------------------------
+# BASIC CHECKS
+# --------------------------------------
+
+log ""
+log "=================================="
+log " BASIC ENVIRONMENT CHECKS "
+log "=================================="
+
+python3 --version >> $REPORT 2>&1
+node -v >> $REPORT 2>&1
+npm -v >> $REPORT 2>&1
+
+# --------------------------------------
+# TORCH TEST
+# --------------------------------------
+
+log ""
+log "=================================="
+log " TORCH TEST "
+log "=================================="
+
+python3 <<EOF >> $REPORT 2>&1
+import torch
+
+print("TORCH VERSION:", torch.__version__)
+print("CUDA AVAILABLE:", torch.cuda.is_available())
+
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0))
+else:
+    print("CPU MODE ACTIVE")
+EOF
+
+if [ $? -eq 0 ]; then
+    log "[OK] Torch test passed"
+else
+    log "[FAIL] Torch test failed"
+fi
+
+# --------------------------------------
+# WHISPER IMPORT TEST
+# --------------------------------------
+
+log ""
+log "=================================="
+log " WHISPER IMPORT TEST "
+log "=================================="
+
+python3 <<EOF >> $REPORT 2>&1
+import whisper
+print("WHISPER IMPORT OK")
+EOF
+
+if [ $? -eq 0 ]; then
+    log "[OK] Whisper import passed"
+else
+    log "[FAIL] Whisper import failed"
+fi
+
+# --------------------------------------
+# XTTS IMPORT TEST
+# --------------------------------------
+
+log ""
+log "=================================="
+log " XTTS IMPORT TEST "
+log "=================================="
+
+python3 <<EOF >> $REPORT 2>&1
+from TTS.api import TTS
+print("XTTS IMPORT OK")
+EOF
+
+if [ $? -eq 0 ]; then
+    log "[OK] XTTS import passed"
+else
+    log "[FAIL] XTTS import failed"
+fi
+
+# --------------------------------------
+# FFMPEG TEST
+# --------------------------------------
+
+log ""
+log "=================================="
+log " FFMPEG TEST "
+log "=================================="
+
+ffmpeg -version >> $REPORT 2>&1
+
+if [ $? -eq 0 ]; then
+    log "[OK] ffmpeg available"
+else
+    log "[FAIL] ffmpeg missing"
+fi
+
+# --------------------------------------
+# CHECK WORKER FILES
+# --------------------------------------
+
+log ""
+log "=================================="
+log " WORKER FILE CHECK "
+log "=================================="
+
+WORKERS=(
+    "python_workers/run_whisperx.py"
+    "python_workers/run_nllb.py" --src_lang en --tgt_lang hi
+    "python_workers/run_xtts.py"
+    "python_workers/run_pydub.py"
+)
+
+for worker in "${WORKERS[@]}"
+do
+    if [ -f "$worker" ]; then
+        log "[OK] Found $worker"
+    else
+        log "[FAIL] Missing $worker"
+    fi
+done
+
+# --------------------------------------
+# CREATE TEST DIRECTORIES
+# --------------------------------------
+
+log ""
+log "=================================="
+log " TEST DIRECTORY SETUP "
+log "=================================="
+
+mkdir -p test-assets
+mkdir -p temp/test-job
+mkdir -p outputs
+
+log "[OK] Test directories created"
+
+# --------------------------------------
+# GENERATE TEST AUDIO
+# --------------------------------------
+
+log ""
+log "=================================="
+log " GENERATING TEST AUDIO "
+log "=================================="
+
+ffmpeg -f lavfi -i sine=frequency=1000:duration=3 test-assets/test-tone.wav -y >> $REPORT 2>&1
+
+if [ $? -eq 0 ]; then
+    log "[OK] Test audio generated"
+else
+    log "[FAIL] Could not generate test audio"
+fi
+
+# --------------------------------------
+# WHISPER WORKER SMOKE TEST
+# --------------------------------------
+
+log ""
+log "=================================="
+log " WHISPER WORKER TEST "
+log "=================================="
+
+python3 python_workers/run_whisperx.py \
+--audio test-assets/test-tone.wav \
+--output temp/test-job/transcript.json \
+>> $REPORT 2>&1
+
+if [ $? -eq 0 ]; then
+    log "[OK] Whisper worker executed"
+else
+    log "[FAIL] Whisper worker failed"
+fi
+
+# --------------------------------------
+# NLLB WORKER TEST
+# --------------------------------------
+
+log ""
+log "=================================="
+log " NLLB WORKER TEST "
+log "=================================="
+
+if [ -f "python_workers/run_nllb.py" ]; then
+
+python3 python_workers/run_nllb.py \
+--transcript temp/test-job/transcript.json \
+--output temp/test-job/translated.json \
+>> $REPORT 2>&1
+
+if [ $? -eq 0 ]; then
+    log "[OK] NLLB worker executed"
+else
+    log "[FAIL] NLLB worker failed"
+fi
+
+fi
+
+# --------------------------------------
+# FINAL SUMMARY
+# --------------------------------------
+
+log ""
+log "=================================="
+log " SMOKE TEST COMPLETED "
+log "=================================="
+
+log ""
+log "REPORT LOCATION:"
+log "$REPORT"
+
+echo ""
+echo "======================================="
+echo " DONE "
+echo "======================================="
+echo ""

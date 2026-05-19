@@ -1,0 +1,20 @@
+=========== SPAWN ANALYSIS ===========
+5:import { exec, spawn } from "child_process";
+20:const execPromise = promisify(exec);
+22:const getPythonBin = () => {
+23:  const venvPath = path.join(process.cwd(), "venv", "bin", "python");
+24:  return fs.existsSync(venvPath) ? venvPath : "python3";
+28:const activeProcesses: Record<string, ReturnType<typeof spawn>> = {};
+38:    const process = spawn(cmd, args);
+111:        const { stdout } = await execPromise(
+112:          'python3 -c "import torch; print(torch.cuda.is_available())"',
+118:        const { stdout } = await execPromise("ffmpeg -version");
+123:        const { stdout } = await execPromise(
+416:          getPythonBin(),
+418:            "python_workers/run_whisperx.py",
+435:          getPythonBin(),
+437:            "python_workers/run_nllb.py",
+455:          getPythonBin(),
+457:            "python_workers/run_xtts.py",
+476:          getPythonBin(),
+478:            "python_workers/run_pydub.py",
