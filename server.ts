@@ -415,7 +415,7 @@ async function startServer() {
           jobId,
           getPythonBin(),
           [
-            "python_workers/run_whisperx.py",
+            "python_workers/transcribe.py",
             "--audio",
             audioExtractPath,
             "--output",

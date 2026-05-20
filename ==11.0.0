@@ -1,0 +1,15 @@
+Collecting ctranslate2==4.2.1
+  Downloading ctranslate2-4.2.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (10 kB)
+Collecting faster-whisper==0.9.0
+  Downloading faster_whisper-0.9.0-py3-none-any.whl.metadata (11 kB)
+Collecting av
+  Downloading av-17.0.1-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (4.6 kB)
+Requirement already satisfied: setuptools in ./venv/lib/python3.10/site-packages (from ctranslate2==4.2.1) (69.5.1)
+Requirement already satisfied: numpy in ./venv/lib/python3.10/site-packages (from ctranslate2==4.2.1) (1.26.4)
+Requirement already satisfied: pyyaml<7,>=5.3 in ./venv/lib/python3.10/site-packages (from ctranslate2==4.2.1) (6.0.3)
+  Downloading av-10.0.0.tar.gz (2.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.4/2.4 MB 312.7 MB/s  0:00:00
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'error'
