@@ -1,0 +1,382 @@
+requriements for openvoice V2 TTS
+
+librosa==0.9.1
+faster-whisper==0.9.0
+pydub==0.25.1
+wavmark==0.0.3
+numpy==1.22.0
+eng_to_ipa==0.0.2
+inflect==7.0.0
+unidecode==1.3.7
+whisper-timestamped==1.14.2
+openai
+python-dotenv
+pypinyin==0.50.0
+cn2an==0.5.22
+jieba==0.42.1
+gradio==3.48.0
+langid==1.1.6
+
+installation for F5-TTS
+
+Installation
+Create a separate environment if needed
+# Create a conda env with python_version>=3.10  (you could also use virtualenv)
+conda create -n f5-tts python=3.11
+conda activate f5-tts
+
+# Install FFmpeg if you haven't yet
+conda install ffmpeg
+Install PyTorch with matched device
+NVIDIA GPU
+AMD GPU
+Intel GPU
+Apple Silicon
+Then you can choose one from below:
+1. As a pip package (if just for inference)
+pip install f5-tts
+2. Local editable (if also do training, finetuning)
+git clone https://github.com/SWivid/F5-TTS.git
+cd F5-TTS
+# git submodule update --init --recursive  # (optional, if use bigvgan as vocoder)
+pip install -e .
+Docker usage also available
+# Build from Dockerfile
+docker build -t f5tts:v1 .
+
+# Run from GitHub Container Registry
+docker container run --rm -it --gpus=all --mount 'type=volume,source=f5-tts,target=/root/.cache/huggingface/hub/' -p 7860:7860 ghcr.io/swivid/f5-tts:main
+
+# Quickstart if you want to just run the web interface (not CLI)
+docker container run --rm -it --gpus=all --mount 'type=volume,source=f5-tts,target=/root/.cache/huggingface/hub/' -p 7860:7860 ghcr.io/swivid/f5-tts:main f5-tts_infer-gradio --host 0.0.0.0
+Runtime
+Deployment solution with Triton and TensorRT-LLM.
+
+Benchmark Results
+Decoding on a single L20 GPU, using 26 different prompt_audio & target_text pairs, 16 NFE.
+
+Model	Concurrency	Avg Latency	RTF	Mode
+F5-TTS Base (Vocos)	2	253 ms	0.0394	Client-Server
+F5-TTS Base (Vocos)	1 (Batch_size)	-	0.0402	Offline TRT-LLM
+F5-TTS Base (Vocos)	1 (Batch_size)	-	0.1467	Offline Pytorch
+See detailed instructions for more information.
+
+Inference
+In order to achieve desired performance, take a moment to read detailed guidance.
+By properly searching the keywords of problem encountered, issues are very helpful.
+1. Gradio App
+Currently supported features:
+
+Basic TTS with Chunk Inference
+Multi-Style / Multi-Speaker Generation
+Voice Chat powered by Qwen2.5-3B-Instruct
+Custom inference with more language support
+# Launch a Gradio app (web interface)
+f5-tts_infer-gradio
+
+# Specify the port/host
+f5-tts_infer-gradio --port 7860 --host 0.0.0.0
+
+# Launch a share link
+f5-tts_infer-gradio --share
+NVIDIA device docker compose file example
+2. CLI Inference
+# Run with flags
+# Leave --ref_text "" will have ASR model transcribe (extra GPU memory usage)
+f5-tts_infer-cli --model F5TTS_v1_Base \
+--ref_audio "provide_prompt_wav_path_here.wav" \
+--ref_text "The content, subtitle or transcription of reference audio." \
+--gen_text "Some text you want TTS model generate for you."
+
+# Run with default setting. src/f5_tts/infer/examples/basic/basic.toml
+f5-tts_infer-cli
+# Or with your own .toml file
+f5-tts_infer-cli -c custom.toml
+
+# Multi voice. See src/f5_tts/infer/README.md
+f5-tts_infer-cli -c src/f5_tts/infer/examples/multi/story.toml
+Training
+1. With Hugging Face Accelerate
+Refer to training & finetuning guidance for best practice.
+
+2. With Gradio App
+# Quick start with Gradio web interface
+f5-tts_finetune-gradio
+Read training & finetuning guidance for more instructions.
+
+Evaluation
+Development
+Use pre-commit to ensure code quality (will run linters and formatters automatically):
+
+pip install pre-commit
+pre-commit install
+When making a pull request, before each commit, run:
+
+pre-commit run --all-files
+Note: Some model components have linting exceptions for E722 to accommodate tensor notation.
+
+Acknowledgements
+E2-TTS brilliant work, simple and effective
+Emilia, WenetSpeech4TTS, LibriTTS, LJSpeech valuable datasets
+lucidrains initial CFM structure with also bfs18 for discussion
+SD3 & Hugging Face diffusers DiT and MMDiT code structure
+torchdiffeq as ODE solver, Vocos and BigVGAN as vocoder
+FunASR, faster-whisper, UniSpeech, SpeechMOS for evaluation tools
+ctc-forced-aligner for speech edit test
+mrfakename huggingface space demo ~
+f5-tts-mlx Implementation with MLX framework by Lucas Newman
+F5-TTS-ONNX ONNX Runtime version by DakeQQ
+Yuekai Zhang Triton and TensorRT-LLM support ~
+Citation
+If our work and codebase is useful for you, please cite as:
+
+@article{chen-etal-2024-f5tts,
+      title={F5-TTS: A Fairytaler that Fakes Fluent and Faithful Speech with Flow Matching}, 
+      author={Yushen Chen and Zhikang Niu and Ziyang Ma and Keqi Deng and Chunhui Wang and Jian Zhao and Kai Yu and Xie Chen},
+      journal={arXiv preprint arXiv:2410.06885},
+      year={2024},
+}
+
+How to run Qwen3
+
+Run Qwen3
+🤗 Transformers
+Transformers is a library of pretrained natural language processing for inference and training. The latest version of transformers is recommended and transformers>=4.51.0 is required.
+
+Qwen3-Instruct-2507
+The following contains a code snippet illustrating how to use Qwen3-30B-A3B-Instruct-2507 to generate content based on given inputs.
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_name = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+
+# load the tokenizer and the model
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    torch_dtype="auto",
+    device_map="auto"
+)
+
+# prepare the model input
+prompt = "Give me a short introduction to large language model."
+messages = [
+    {"role": "user", "content": prompt}
+]
+text = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True,
+)
+model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+
+# conduct text completion
+generated_ids = model.generate(
+    **model_inputs,
+    max_new_tokens=16384
+)
+output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist() 
+
+content = tokenizer.decode(output_ids, skip_special_tokens=True)
+
+print("content:", content)
+Note
+
+Qwen3-Instruct-2507 supports only non-thinking mode and does not generate <think></think> blocks in its output. Meanwhile, specifying enable_thinking=False is no longer required.
+
+Qwen3-Thinking-2507
+The following contains a code snippet illustrating how to use Qwen3-30B-A3B-Thinking-2507 to generate content based on given inputs.
+
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_name = "Qwen/Qwen3-30B-A3B-Thinking-2507"
+
+# load the tokenizer and the model
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    torch_dtype="auto",
+    device_map="auto"
+)
+
+# prepare the model input
+prompt = "Give me a short introduction to large language model."
+messages = [
+    {"role": "user", "content": prompt}
+]
+text = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True,
+)
+model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+
+# conduct text completion
+generated_ids = model.generate(
+    **model_inputs,
+    max_new_tokens=32768
+)
+output_ids = generated_ids[0][len(model_inputs.input_ids[0]):].tolist() 
+
+# parsing thinking content
+try:
+    # rindex finding 151668 (</think>)
+    index = len(output_ids) - output_ids[::-1].index(151668)
+except ValueError:
+    index = 0
+
+thinking_content = tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
+content = tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
+
+print("thinking content:", thinking_content)  # no opening <think> tag
+print("content:", content)
+Note
+
+Qwen3-Thinking-2507 supports only thinking mode. Additionally, to enforce model thinking, the default chat template automatically includes <think>. Therefore, it is normal for the model's output to contain only </think> without an explicit opening <think> tag.
+
+Qwen3-Thinking-2507 also features an increased thinking length. We strongly recommend its use in highly complex reasoning tasks with adequate maximum generation length.
+
+Switching Thinking/Non-thinking Modes for Previous Qwen3 Models
+ModelScope
+We strongly advise users especially those in mainland China to use ModelScope. ModelScope adopts a Python API similar to Transformers. The CLI tool modelscope download can help you solve issues concerning downloading checkpoints. For vLLM and SGLang, the environment variable VLLM_USE_MODELSCOPE=true and SGLANG_USE_MODELSCOPE=true can be used respectively.
+
+llama.cpp
+llama.cpp enables LLM inference with minimal setup and state-of-the-art performance on a wide range of hardware. llama.cpp>=b5401 is recommended for the full support of Qwen3.
+
+To use the CLI, run the following in a terminal:
+
+./llama-cli -hf Qwen/Qwen3-8B-GGUF:Q8_0 --jinja --color -ngl 99 -fa -sm row --temp 0.6 --top-k 20 --top-p 0.95 --min-p 0 -c 40960 -n 32768 --no-context-shift
+# CTRL+C to exit
+To use the API server, run the following in a terminal:
+
+./llama-server -hf Qwen/Qwen3-8B-GGUF:Q8_0 --jinja --reasoning-format deepseek -ngl 99 -fa -sm row --temp 0.6 --top-k 20 --top-p 0.95 --min-p 0 -c 40960 -n 32768 --no-context-shift --port 8080
+A simple web front end will be at http://localhost:8080 and an OpenAI-compatible API will be at http://localhost:8080/v1.
+
+For additional guides, please refer to our documentation.
+
+Note
+
+llama.cpp adopts "rotating context management" and infinite generation is made possible by evicting earlier tokens. It could configured by parameters and the commands above effectively disable it. For more details, please refer to our documentation.
+
+Ollama
+After installing Ollama, you can initiate the Ollama service with the following command (Ollama v0.9.0 or higher is recommended):
+
+ollama serve
+# You need to keep this service running whenever you are using ollama
+To pull a model checkpoint and run the model, use the ollama run command. You can specify a model size by adding a suffix to qwen3, such as :8b or :30b-a3b:
+
+ollama run qwen3:8b
+# Setting parameters, type "/set parameter num_ctx 40960" and "/set parameter num_predict 32768"
+# To exit, type "/bye" and press ENTER
+# For Qwen3-2504 models,
+# - To enable thinking, which is the default, type "/set think"
+# - To disable thinking, type "/set nothink"
+You can also access the Ollama service via its OpenAI-compatible API. Please note that you need to (1) keep ollama serve running while using the API, and (2) execute ollama run qwen3:8b before utilizing this API to ensure that the model checkpoint is prepared. The API is at http://localhost:11434/v1/ by default.
+
+For additional details, please visit ollama.ai.
+
+Note
+
+Ollama's naming may not be consistent with the Qwen's original naming. For example, qwen3:30b-a3b in Ollama points to qwen3:30b-a3b-thinking-2507-q4_K_M as of August 2025. Please check https://ollama.com/library/qwen3/tags before use.
+
+Note
+
+Ollama adopts the same "rotating context management" with llama.cpp. However, its default settings (num_ctx 2048 and num_predict -1), suggesting infinite generation with a 2048-token context, could lead to trouble for Qwen3 models. We recommend setting num_ctx and num_predict properly.
+
+LMStudio
+Qwen3 has already been supported by lmstudio.ai. You can directly use LMStudio with our GGUF files.
+
+ExecuTorch
+To export and run on ExecuTorch (iOS, Android, Mac, Linux, and more), please follow this example.
+
+MNN
+To export and run on MNN, which supports Qwen3 on mobile devices, please visit Alibaba MNN.
+
+MLX LM
+If you are running on Apple Silicon, mlx-lm also supports Qwen3 (mlx-lm>=0.24.0). Look for models ending with MLX on Hugging Face Hub.
+
+OpenVINO
+If you are running on Intel CPU or GPU, OpenVINO toolkit supports Qwen3. You can follow this chatbot example.
+
+Deploy Qwen3
+Qwen3 is supported by multiple inference frameworks. Here we demonstrate the usage of SGLang, vLLM and TensorRT-LLM. You can also find Qwen3 models from various inference providers, e.g., Alibaba Cloud Model Studio.
+
+SGLang
+SGLang is a fast serving framework for large language models and vision language models. SGLang could be used to launch a server with OpenAI-compatible API service. sglang>=0.4.6.post1 is required.
+
+For Qwen3-Instruct-2507,
+
+python -m sglang.launch_server --model-path Qwen/Qwen3-30B-A3B-Instruct-2507 --port 30000 --context-length 262144
+For Qwen3-Thinking-2507,
+
+python -m sglang.launch_server --model-path Qwen/Qwen3-30B-A3B-Thinking-2507 --port 30000 --context-length 262144 --reasoning-parser deepseek-r1
+For Qwen3, it is
+
+python -m sglang.launch_server --model-path Qwen/Qwen3-8B --port 30000 --context-length 131072 --reasoning-parser qwen3
+An OpenAI-compatible API will be available at http://localhost:30000/v1.
+
+Note
+
+Due to the preprocessing of API requests in SGLang, which drops all reasoning_content fields, the quality of multi-step tool use with Qwen3 thinking models may be suboptimal, which requires the existence of the related thinking content. While the fixes are being worked on, as a workdaround, we recommend passing the content as it is, without extracting thinking content, and the chat template will correctly handle the processing.
+
+vLLM
+vLLM is a high-throughput and memory-efficient inference and serving engine for LLMs. vllm>=0.9.0 is recommended.
+
+For Qwen3-Instruct-2507,
+
+vllm serve Qwen/Qwen3-30B-A3B-Instruct-2507 --port 8000 --max-model-len 262144
+For Qwen3-Thinking-2507,
+
+vllm serve Qwen/Qwen3-30B-A3B-Thinking-2507 --port 8000 --max-model-len 262144 --enable-reasoning --reasoning-parser deepseek_r1
+For Qwen3, it is
+
+vllm serve Qwen/Qwen3-8B --port 8000 --max-model-len 131072 --enable-reasoning --reasoning-parser qwen3
+An OpenAI-compatible API will be available at http://localhost:8000/v1.
+
+Note
+
+Due to the preprocessing of API requests in vLLM, which drops all reasoning_content fields, the quality of multi-step tool use with Qwen3 thinking models may be suboptimal, which requires the existence of the related thinking content. While the fixes are being worked on, as a workdaround, we recommend passing the content as it is, without extracting thinking content, and the chat template will correctly handle the processing.
+
+TensorRT-LLM
+TensorRT-LLM is an open-source LLM inference engine from NVIDIA, which provides optimizations including custom attention kernels, quantization and more on NVIDIA GPUs. Qwen3 is supported in its re-architected PyTorch backend. tensorrt_llm>=0.20.0rc3 is recommended. Please refer to the README page for more details.
+
+trtllm-serve Qwen/Qwen3-8B --host localhost --port 8000 --backend pytorch
+An OpenAI-compatible API will be available at http://localhost:8000/v1.
+
+MindIE
+For deployment on Ascend NPUs, please visit Modelers and search for Qwen3.
+
+Build with Qwen3
+Tool Use
+For tool use capabilities, we recommend taking a look at Qwen-Agent, which provides a wrapper around these APIs to support tool use or function calling with MCP support. Tool use with Qwen3 can also be conducted with SGLang, vLLM, Transformers, llama.cpp, Ollama, etc. Follow guides in our documentation to see how to enable the support.
+
+Finetuning
+We advise you to use training frameworks, including Axolotl, UnSloth, Swift, Llama-Factory, etc., to finetune your models with SFT, DPO, GRPO, etc.
+
+License Agreement
+All our open-weight models are licensed under Apache 2.0. You can find the license files in the respective Hugging Face repositories.
+
+Citation
+If you find our work helpful, feel free to give us a cite.
+
+@article{qwen3,
+    title={Qwen3 Technical Report}, 
+    author={An Yang and Anfeng Li and Baosong Yang and Beichen Zhang and Binyuan Hui and Bo Zheng and Bowen Yu and Chang Gao and Chengen Huang and Chenxu Lv and Chujie Zheng and Dayiheng Liu and Fan Zhou and Fei Huang and Feng Hu and Hao Ge and Haoran Wei and Huan Lin and Jialong Tang and Jian Yang and Jianhong Tu and Jianwei Zhang and Jianxin Yang and Jiaxi Yang and Jing Zhou and Jingren Zhou and Junyang Lin and Kai Dang and Keqin Bao and Kexin Yang and Le Yu and Lianghao Deng and Mei Li and Mingfeng Xue and Mingze Li and Pei Zhang and Peng Wang and Qin Zhu and Rui Men and Ruize Gao and Shixuan Liu and Shuang Luo and Tianhao Li and Tianyi Tang and Wenbiao Yin and Xingzhang Ren and Xinyu Wang and Xinyu Zhang and Xuancheng Ren and Yang Fan and Yang Su and Yichang Zhang and Yinger Zhang and Yu Wan and Yuqiong Liu and Zekun Wang and Zeyu Cui and Zhenru Zhang and Zhipeng Zhou and Zihan Qiu},
+    journal = {arXiv preprint arXiv:2505.09388},
+    year={2025}
+}
+
+@article{qwen2.5,
+    title   = {Qwen2.5 Technical Report}, 
+    author  = {An Yang and Baosong Yang and Beichen Zhang and Binyuan Hui and Bo Zheng and Bowen Yu and Chengyuan Li and Dayiheng Liu and Fei Huang and Haoran Wei and Huan Lin and Jian Yang and Jianhong Tu and Jianwei Zhang and Jianxin Yang and Jiaxi Yang and Jingren Zhou and Junyang Lin and Kai Dang and Keming Lu and Keqin Bao and Kexin Yang and Le Yu and Mei Li and Mingfeng Xue and Pei Zhang and Qin Zhu and Rui Men and Runji Lin and Tianhao Li and Tingyu Xia and Xingzhang Ren and Xuancheng Ren and Yang Fan and Yang Su and Yichang Zhang and Yu Wan and Yuqiong Liu and Zeyu Cui and Zhenru Zhang and Zihan Qiu},
+    journal = {arXiv preprint arXiv:2412.15115},
+    year    = {2024}
+}
+
+@article{qwen2,
+    title   = {Qwen2 Technical Report}, 
+    author  = {An Yang and Baosong Yang and Binyuan Hui and Bo Zheng and Bowen Yu and Chang Zhou and Chengpeng Li and Chengyuan Li and Dayiheng Liu and Fei Huang and Guanting Dong and Haoran Wei and Huan Lin and Jialong Tang and Jialin Wang and Jian Yang and Jianhong Tu and Jianwei Zhang and Jianxin Ma and Jin Xu and Jingren Zhou and Jinze Bai and Jinzheng He and Junyang Lin and Kai Dang and Keming Lu and Keqin Chen and Kexin Yang and Mei Li and Mingfeng Xue and Na Ni and Pei Zhang and Peng Wang and Ru Peng and Rui Men and Ruize Gao and Runji Lin and Shijie Wang and Shuai Bai and Sinan Tan and Tianhang Zhu and Tianhao Li and Tianyu Liu and Wenbin Ge and Xiaodong Deng and Xiaohuan Zhou and Xingzhang Ren and Xinyu Zhang and Xipin Wei and Xuancheng Ren and Yang Fan and Yang Yao and Yichang Zhang and Yu Wan and Yunfei Chu and Yuqiong Liu and Zeyu Cui and Zhenru Zhang and Zhihao Fan},
+    journal = {arXiv preprint arXiv:2407.10671},
+    year    = {2024}
+}
+
