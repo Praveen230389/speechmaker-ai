@@ -139,10 +139,13 @@ def generate_tts(text_json, output_folder, lang, reference_audio):
             # XTTS requires the language to actually be one of its supported (e.g. 'en', 'es', 'fr', 'de', 'it', 'pt', 'pl', 'tr', 'ru', 'nl', 'cs', 'ar', 'zh-cn', 'ja', 'hu', 'ko', 'hi')
             tts.tts_to_file(
                 text=text,
-                speaker_wav=reference_audio,
-                language=lang,
-                file_path=chunk_path
+                speaker_wav=speaker_wav,
+                language="en",
+                file_path=output_path,
+                temperature=0.75,
+                speed=1.1
             )
+           
         except Exception as e:
             print(f"Failed to synthesize chunk {idx}: {e}")
             
